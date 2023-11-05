@@ -1,0 +1,78 @@
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.PriorityQueue;
+import java.util.Random;
+
+class Toy {
+    int id;
+    String name;
+    int weight;
+
+    public Toy(int id, String name, int weight) {
+        this.id = id;
+        this.name = name;
+        this.weight = weight;
+    }
+}
+
+class ToyQueue {
+    private PriorityQueue<Toy> toyQueue;
+    private Random random;
+
+    public ToyQueue() {
+        toyQueue = new PriorityQueue<>((t1, t2) -> Integer.compare(t2.weight, t1.weight));
+        random = new Random();
+    }
+
+    public void put(int id, String name, int weight) {
+        Toy toy = new Toy(id, name, weight);
+        toyQueue.offer(toy);
+    }
+
+    public int get() {
+        int totalWeight = toyQueue.stream().mapToInt(t -> t.weight).sum();
+        int randomValue = random.nextInt(totalWeight);
+        int cumulativeWeight = 0;
+        
+        for (Toy toy : toyQueue) {
+            cumulativeWeight += toy.weight;
+            if (randomValue < cumulativeWeight) {
+                return toy.id;
+            }
+        }
+
+        return toyQueue.peek().id; // Fallback to the toy with the highest weight if something went wrong.
+    }
+
+    public void writeToLogFile(int numTimes, String filePath) {
+        try {
+            File file = new File(filePath);
+            FileWriter writer = new FileWriter(file);
+            for (int i = 0; i < numTimes; i++) {
+                int result = get();
+                writer.write(String.valueOf(result));
+                if (i < numTimes - 1) {
+                    writer.write("\n");
+                }
+            }
+            writer.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        ToyQueue toyQueue = new ToyQueue();
+
+        // Пример добавления игрушек в очередь
+        toyQueue.put(1, "конструктор", 2);
+        toyQueue.put(2, "робот", 2);
+        toyQueue.put(3, "кукла", 6);
+
+        // Вызываем метод Get 5 раз и записываем результаты в файл
+        toyQueue.writeToLogFile(5, "output.txt");
+    }
+}
